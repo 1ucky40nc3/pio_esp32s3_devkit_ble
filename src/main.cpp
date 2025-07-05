@@ -1,45 +1,73 @@
 #include <Arduino.h>
-#include <esp32-hal-rgb-led.h>
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <BLEUtils.h>
+#include <BLE2902.h>
 #include "config.h"
+#include "led.h"
 
-/*
-  BlinkRGB
+// BLE Server Name
+#define bleServerName "ESP32-S3-DevKitC-1"
+// Custom BLE Service UUID
+#define SERVICE_UUID "fe0fadc2-a9dc-4566-96f5-dd8a4934dac2"
+// Some time series data characteristic
+#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
-  Demonstrates usage of onboard RGB LED on some ESP dev boards.
+bool deviceConnected = false;
 
-  Calling digitalWrite(RGB_BUILTIN, HIGH) will use hidden RGB driver.
-
-  RGBLedWrite demonstrates control of each channel:
-  void rgbLedWrite(uint8_t pin, uint8_t red_val, uint8_t green_val, uint8_t blue_val)
-
-  WARNING: After using digitalWrite to drive RGB LED it will be impossible to drive the same pin
-    with normal HIGH/LOW level
-*/
-// #define RGB_BRIGHTNESS 64 // Change white brightness (max 255)
-
-// the setup function runs once when you press reset or power the board
+// BLE Callbacks
+class MyServerCallbacks : public BLEServerCallbacks
+{
+  void onConnect(BLEServer *pServer)
+  {
+    deviceConnected = true;
+    turnLEDGreen();
+  };
+  void onDisconnect(BLEServer *pServer)
+  {
+    deviceConnected = false;
+    turnLEDBlue();
+  }
+};
 
 void setup()
 {
-  // No need to initialize the RGB LED
+  turnLEDOff();
+  // Initialize the serial connection
+  Serial.begin(SERIAL_BAUD);
+  // // wait for Serial to come online (only for testing/development purposes)
+  // while (!Serial)
+  //   ;
+  delay(DELAY_AFTER_SERIAL_INITIALIZED);
+  Serial.println("Serial start");
+  turnLEDWhite();
+
+  // Create BLE Device
+  BLEDevice::init(bleServerName);
+
+  // Create BLE Server
+  BLEServer *pServer = BLEDevice::createServer();
+  pServer->setCallbacks(new MyServerCallbacks());
+
+  BLEService *pService = pServer->createService(SERVICE_UUID);
+  BLECharacteristic *pCharacteristic =
+      pService->createCharacteristic(CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ);
+
+  pCharacteristic->setValue("Hello World says ESP32-S3-DevKitC-1");
+  pService->start();
+  // BLEAdvertising *pAdvertising = pServer->getAdvertising();  // this still is working for backward compatibility
+  BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
+  pAdvertising->addServiceUUID(SERVICE_UUID);
+  pAdvertising->setScanResponse(true);
+  pAdvertising->setMinPreferred(0x06); // functions that help with iPhone connections issue
+  pAdvertising->setMinPreferred(0x12);
+  BLEDevice::startAdvertising();
+  Serial.println("Characteristic defined! Now you can read it in your phone!");
+  turnLEDBlue();
 }
 
 // the loop function runs over and over again forever
 void loop()
 {
-#ifdef RGB_BUILTIN
-  digitalWrite(RGB_BUILTIN, HIGH); // Turn the RGB LED white
-  delay(1000);
-  digitalWrite(RGB_BUILTIN, LOW); // Turn the RGB LED off
-  delay(1000);
-
-  neopixelWrite(RGB_BUILTIN, RGB_BRIGHTNESS, 0, 0); // Red
-  delay(1000);
-  neopixelWrite(RGB_BUILTIN, 0, RGB_BRIGHTNESS, 0); // Green
-  delay(1000);
-  neopixelWrite(RGB_BUILTIN, 0, 0, RGB_BRIGHTNESS); // Blue
-  delay(1000);
-  neopixelWrite(RGB_BUILTIN, 0, 0, 0); // Off / black
-  delay(1000);
-#endif
+  delay(2000);
 }

@@ -5,6 +5,11 @@ A Bluetooth Low Energy Server (BLE) implemented using [PlatformIO] on the [ESP32
 
 ## Getting Started
 
+A Bluetooth Low Energy Server (BLE) implemented using [PlatformIO] on the [ESP32-S3-DevKitC-1] hardware. This project follows the [How to configure Esp32 BLE as a Server and Client using Arduino IDE] tutorial. Here however we implemente the following Generic Attribute Profile (GATT) for the BLE communication:
+
+We implement one service for time serial data. The service has one characteristic with the `notify` and `read` properties. The characteristic has values that may be interpreted as integers type data as part of a time series. The UUID of the service and characteristic can be found in the [configuration](#configuration).
+
+
 ### Install the PlatformIO IDE VSCode Extension
 
 Install the PlatformIO IDE extension from the VSCode extension marketplace (see workspace recommendations). You may be asked to install Python. You may follow the instructions [here](https://docs.platformio.org/en/latest/faq/install-python.html).
@@ -74,6 +79,8 @@ Set the configuration in the [config.h](lib/Config/config.h) header file. Use th
 
 - [PlatformIO]
 - [ESP32-S3-DevKitC-1]
+- [How to configure Esp32 BLE as a Server and Client using Arduino IDE]
 
 [PlatformIO]: https://platformio.org/
 [ESP32-S3-DevKitC-1]: https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s3/esp32-s3-devkitc-1/user_guide_v1.1.html#hardware-reference
+[How to configure Esp32 BLE as a Server and Client using Arduino IDE]: https://embeddedthere.com/how-to-configure-esp32-ble-as-a-server-and-client-using-arduino-ide/
